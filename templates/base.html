@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>PixelGebeta</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    </head>
+    <body>
+        <nav>
+            <a href="{{ url_for('home') }}" class="logo"><span>PixelGebeta</span></a>
+            {% if current_user.is_authenticated %}
+                <ul>
+                    <li>Hey {{current_user.username}}!</li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+            {% else %}
+                <ul>
+                    <li><a href="#" id="login-nav-btn">Login</a></li>
+                    <li><a href="#" id="register-nav-btn">Register</a></li>
+                </ul>   
+            {% endif %}
+            
+        </nav>
+        {% block content %}
+        {% endblock %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
+    </body>
+</html>

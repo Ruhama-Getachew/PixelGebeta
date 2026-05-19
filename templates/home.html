@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section id="landing">
+    <div class="hero">
+        <div class="hero-left">
+            <h1>Welcome to PixelGebeta</h1>
+            <p>Every day you show up, a pixel lights up. 
+              Build habits, track streaks, 
+              and watch your consistency grow.</p>
+        </div>
+        <div class="hero-right">
+            <div class="pixel-grid demo-grid">
+                {% for i in range(150) %}
+                    {% if i in [0, 30, 119, 149] %}
+                        <div class="pixel invisible"></div>
+                    {% else %}
+                        <div class="pixel"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% if not current_user.is_authenticated %}
+            <div class="auth-buttons">
+                <a href="#" id="login-landing-btn">Login</a>
+                <a href="#" id="register-landing-btn">Register</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Login Overlay -->
+    <div class="overlay" id="login-overlay">
+        <div class="inline-form">
+            <h4>Login</h4>
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="e.g. ruhama@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Your password">
+                </div>
+                <div class="form-group">
+                    <label>Remember me</label>
+                    <input type="checkbox" name="remember">
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="save-btn">Login</button>
+                    <button type="button" class="cancel-btn" id="close-login">Cancel</button>
+                </div>
+            </form>
+            <p>Don't have an account? <a href="#" id="switch-to-register">Register</a></p>
+        </div>
+    </div>
+
+    <!-- Register Overlay -->
+    <div class="overlay" id="register-overlay">
+        <div class="inline-form">
+            <h4>Register</h4>
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="e.g. John">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="e.g. john@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Your password">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm" placeholder="Confirm password">
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="save-btn">Register</button>
+                    <button type="button" class="cancel-btn" id="close-register">Cancel</button>
+                </div>
+            </form>
+            <p>Already have an account? <a href="#" id="switch-to-login">Login</a></p>
+        </div>
+    </div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <p class="flash-message">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</section>
+
+<section id="dashboard">
+    {% if current_user.is_authenticated %}
+        <div class="overlay" id="habit-overlay">
+            <div class="inline-form" id="create-form" style="display:none">
+                <form method="POST" action="{{ url_for('add_habit') }}">
+                    <div class="form-group">
+                        <label for="name">Habit Name:</label>
+                        <input type="text" name="name" placeholder="e.g. Cycling">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <input type="text" name="description" placeholder="e.g. Cycle around the neighborhood.">
+                    </div>
+                    <div class="form-group">
+                        <label for="unit">Unit:</label>
+                        <input type="text" name="unit" placeholder="e.g. Kms">
+                        <small>Tip: For habits that aren't measurable, use 'sessions' or 'hrs' as your unit.</small>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="save-btn">Save</button>
+                        <button type="button" class="cancel-btn" id="close-create">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if habits %}
+            <div class="total-card">
+                <div class="total-progress">
+                    <div class="total-header">
+                        <h4>Total Progress</h4>
+                    </div>
+                    <div class="total-graph">
+                        <div class="graph-controls">
+                            <button class="graph-btn active" data-range="30">1M</button>
+                            <button class="graph-btn" data-range="90">3M</button>
+                            <button class="graph-btn" data-range="180">6M</button>
+                            <button class="graph-btn" data-range="370">1Y</button>
+                        </div>
+                        <canvas id="totalChart"></canvas>
+                    </div>
+                    <div class="total-scroll">
+                        <div class="pixel-grid github-grid">
+                            {% for week in total_weeks %}
+                                <div class="pixel-week">
+                                    {% for pixel in week %}
+                                        <div class="pixel {% if pixel.level > 0 %}level-{{ pixel.level }}{% endif %}"
+                                            data-date="{{ pixel.date }}"
+                                            data-quantity="{{ pixel.quantity }}">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="streak">
+                    <img class="fire" src="{{ url_for('static', filename='fire.svg') }}" alt="streak fire">
+                    <p>{{streak_count}}</p>
+                    <p>day</p>
+                    <p>Streak</p>
+                </div>
+                <div class="habits-list">
+                    <h4>My habits</h4>
+                    <ul>
+                        {% for habit in habits %}
+                        <li><a href="#habit-{{habit.id}}">{{habit.name}}</a></li>
+                        {% endfor %}
+                    </ul>
+                    <button class="add-habit-list-btn" id="add-habit-list-btn">+</button>
+                </div>
+            </div>
+            <div class="overlay" id="edit-overlay">
+                <div class="inline-form">
+                    <h4>Edit Habit</h4>
+                    <form method="POST" action="{{url_for('edit_habit')}}">
+                        <input type="hidden" name="habit_id" id="edit-habit-id">
+                        <div class="form-group">
+                            <label for="name">Habit Name:</label>
+                            <input type="text" name="name" id="edit-name" placeholder="e.g. Reading">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description:</label>
+                            <input type="text" name="description" id="edit-description" placeholder="e.g. Reading pyschological books.">
+                        </div>
+                        <div class="form-group">
+                            <label for="unit">Unit:</label>
+                            <input type="text" name="unit" id="edit-unit" placeholder="e.g. pages">
+                            <small>hint: You can use session hrs as unit for non quantified habits.</small>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="save-btn">Save</button>
+                            <button type="button" class="cancel-btn" id="close-edit">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="overlay" id="delete-overlay">
+                <div class="inline-form">
+                    <h4>Delete Habit</h4>
+                    <p>Are you sure you want to delete this habit?</p>
+                    <form method="POST" action="{{url_for('delete_habit')}}">
+                        <input type="hidden" name="habit_id" id="delete-habit-id">
+                        <div class="form-buttons">
+                            <button type="submit" class="save-btn" style="background-color: #c0392b">Delete</button>
+                            <button type="button" class="cancel-btn" id="close-delete">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="overlay" id="log-overlay">
+                <div class="inline-form">
+                    <h4 id="log-habit-name">Log Today</h4>
+                    <form method="POST" action="{{url_for('log_today')}}">
+                        <input type="hidden" name="habit_id" id="log-today-id">
+                        <div class="form-group">
+                            <label for="amount">Today's progress:</label>
+                            <div style="display:flex; gap:10px; align-items:center">
+                                <input type="number" name="amount" id="log-amount">
+                                <span id="log-unit"></span>
+                            </div>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="save-btn">Save</button>
+                            <button type="button" class="cancel-btn" id="close-log">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="overlay" id="reminder-overlay">
+                <div class="inline-form">
+                    <h4>Set Reminder</h4>
+                    <p id="reminder-habit-name" style="color: var(--text-secondary); font-size: 13px;"></p>
+                    <form method="POST" action="{{ url_for('set_reminder') }}">
+                        <input type="hidden" name="habit_id" id="reminder-habit-id">
+                        <div class="form-group">
+                            <label>Reminder Time</label>
+                            <input type="time" name="reminder_time" id="reminder-time-input">
+                            <small>You'll get a browser notification at this time every day.</small>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="save-btn">Save</button>
+                            <button type="button" class="cancel-btn" id="close-reminder">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% for habit in habits %}
+            <div class="habit-card" id="habit-{{habit.id}}">
+                <div class="habit-left">
+                    <div class="habit-header">
+                        <div class="habit-description">
+                            <h4>{{habit.name}}</h4>
+                            <p>{{habit.description}}</p>
+                        </div>
+                        <div class="habit-actions">
+                            <button class="edit"
+                                data-id="{{ habit.id }}" 
+                                data-name="{{ habit.name }}" 
+                                data-description="{{ habit.description }}" 
+                                data-unit="{{ habit.unit }}">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="delete" data-id="{{habit.id}}"><i class="fa-solid fa-trash"></i></button>
+                            <button class="log" 
+                                data-id="{{habit.id}}"
+                                data-name="{{habit.name}}"
+                                data-unit="{{habit.unit}}">Log</button>
+                            <button class="reminder"
+                                data-id="{{ habit.id }}"
+                                data-name="{{ habit.name }}"
+                                data-time="{{ habit.reminder_time or '' }}">
+                                <i class="fa-solid fa-bell"></i></button>
+                        </div>
+                    </div>
+                    <div class="habit-scroll">
+                        <div class="pixel-grid github-grid">
+                            {% for week in habit_pixels[habit.id] %}
+                                <div class="pixel-week">
+                                    {% for pixel in week %}
+                                        <div class="pixel {% if pixel.level > 0 %}level-{{ pixel.level }}{% endif %}"
+                                            data-date="{{ pixel.date }}"
+                                            data-quantity="{{ pixel.quantity }}">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="streak">
+                    <img class="fire" src="{{ url_for('static', filename='fire.svg') }}" alt="streak fire">
+                    <p>{{habit_stats[habit.id]['habit_streak']}}</p>
+                    <p>day</p>
+                    <p>Streak</p>
+                </div>
+                <div class="habit-right">
+                    <h4>Today, {{habit_stats[habit.id]['today_amount']}} {{habit.unit}}</h4>
+                    <ul>
+                        <li>Total: {{habit_stats[habit.id]['total_amount']}} {{habit.unit}}</li>
+                        <li>Max: {{habit_stats[habit.id]['max_amount']}} {{habit.unit}}</li>
+                        <li>Min: {{habit_stats[habit.id]['min_amount']}} {{habit.unit}}</li>
+                        <li>Avg: {{habit_stats[habit.id]['avg_amount']}} {{habit.unit}}</li>
+                    </ul>
+                    <h5>Total Pixels: {{habit_stats[habit.id]['total_pixels']}} pixels</h5>
+                </div>
+            </div>
+            {% endfor %}
+            <button class="add-habit-btn" id="add-habit-btn">+ Add Habit</button>
+        {% else %}
+            <div class="welcome-card">
+                <div class="welcome-left">
+                    <h2>Welcome to PixelGebeta, {{ current_user.username }}! 👋</h2>
+                    <p>Start building better habits today. Track your progress with beautiful pixel grids, maintain streaks, and get reminders.</p>
+                    <div class="welcome-features">
+                        <div class="welcome-feature">
+                            <span>🟩</span>
+                            <p>Pixel grid — visualize your consistency day by day</p>
+                        </div>
+                        <div class="welcome-feature">
+                            <span>🔥</span>
+                            <p>Streaks — stay motivated by keeping your streak alive</p>
+                        </div>
+                        <div class="welcome-feature">
+                            <span>🔔</span>
+                            <p>Reminders — never miss a day with browser notifications</p>
+                        </div>
+                        <div class="welcome-feature">
+                            <span>📊</span>
+                            <p>Stats — track your total, max, min and average progress</p>
+                        </div>
+                    </div>
+                    <button class="create-btn" id="create-btn">+ Create Your First Habit</button>
+                </div>
+                <div class="welcome-right">
+                    <div class="pixel-grid demo-grid-dashboard">
+                        {% for i in range(148) %}
+                            <div class="pixel welcome-pixel"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+    {% endif %}
+</section>
+
+{% if not current_user.is_authenticated %}
+<script>
+    const nav = document.querySelector('nav')
+    nav.style.display = 'none'
+    window.addEventListener('scroll', () => {
+        const landingBottom = document.getElementById('landing').getBoundingClientRect().bottom
+        nav.style.display = landingBottom <= 0 ? 'block' : 'none'
+    })
+</script>
+{% endif %}
+{% if current_user.is_authenticated %}
+    <script>
+        window.addEventListener('load', function() {
+            const canvas = document.getElementById('totalChart')
+            if (!canvas) return
+
+            const allLabels = {{ graph_labels | tojson }}
+            const habitSeries = {{ graph_habits | tojson }}
+
+            const colors = [
+                '#2A5230', '#c0392b', '#2980b9', '#e67e22',
+                '#8e44ad', '#16a085', '#d4ac0d', '#884ea0',
+            ]
+
+            function buildChart(range) {
+                const labels = allLabels.slice(-range)
+                const datasets = habitSeries.map((habit, i) => ({
+                    label: habit.name,
+                    data: habit.data.slice(-range),
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: colors[i % colors.length] + '22',
+                    borderWidth: 2,
+                    pointRadius: range <= 30 ? 3 : 0,
+                    fill: false,
+                    tension: 0.4
+                }))
+                return { labels, datasets }
+            }
+
+            let currentRange = 30
+            let chart = new Chart(canvas, {
+                type: 'line',
+                data: buildChart(currentRange),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { size: 10 }, boxWidth: 12 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { font: { size: 9 }, maxRotation: 0, maxTicksLimit: 6 },
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: { font: { size: 9 } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            })
+
+            document.querySelectorAll('.graph-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.graph-btn').forEach(b => b.classList.remove('active'))
+                    btn.classList.add('active')
+                    currentRange = parseInt(btn.dataset.range)
+                    chart.data = buildChart(currentRange)
+                    chart.update()
+                })
+            })
+        })
+    </script>
+{% endif %}
+
+{% endblock %}
