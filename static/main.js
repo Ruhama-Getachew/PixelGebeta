@@ -173,8 +173,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('log-today-id').value = btn.dataset.id
                 document.getElementById('log-habit-name').textContent = btn.dataset.name
                 document.getElementById('log-unit').textContent = btn.dataset.unit
+                document.getElementById('log-error').textContent = ''
                 logOverlay.classList.add('active')
             })
+        })
+        document.querySelector('#log-overlay form').addEventListener('submit', (e) => {
+                const amount = document.getElementById('log-amount').value
+                if (isNaN(amount) || amount === ''){
+                    document.getElementById('log-error').textContent = "Please insert valid unit value!"
+                    e.preventDefault()
+                }   
+                
         })
 
         closeLog.addEventListener('click', () => {

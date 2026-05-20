@@ -529,6 +529,9 @@ nav ul li a:hover{
     font-size: 14px;
 }
 
+#log-error {
+    color: #c0392b;
+}
 /*styling inline-form*/
 .inline-form {
     background-color: var(--card);
