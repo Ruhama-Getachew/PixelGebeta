@@ -1,8 +1,7 @@
 # PixelGebeta 🟩
 
-> Your habits are writing your story. Show up every day and watch it unfold — one pixel at a time.
+> PixelGebeta is a habit tracking web app that turns your daily consistency into a visual pixel grid. Built with Flask, SQLAlchemy, and SQLite — deployed on Render.
 
-PixelGebeta is a habit tracking web app that turns your daily consistency into a beautiful pixel grid. Built with Flask and SQLite.
 
 ## Features
 
